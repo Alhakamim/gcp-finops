@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -34,13 +32,7 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://finops:finops_secret_2026@postgres:5432/gcp_finops
       JWT_SECRET: finops-jwt-secret-change-in-production
-      GOOGLE_CLIENT_ID: ""
-      GOOGLE_CLIENT_SECRET: ""
       NEXTAUTH_SECRET: finops-nextauth-secret
-      NEXTAUTH_URL: https://finops.a3hd.com
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
 
   frontend:
     build:
@@ -54,13 +46,7 @@ services:
       - backend
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: https://api.finops.a3hd.com
-      NEXTAUTH_SECRET: finops-nextauth-secret
-      NEXTAUTH_URL: https://finops.a3hd.com
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
 
 volumes:
   pgdata:
