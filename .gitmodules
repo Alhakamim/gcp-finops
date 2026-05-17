@@ -1,0 +1,3 @@
+[submodule "backend/infra/terraform-billing-billboard"]
+	path = backend/infra/terraform-billing-billboard
+	url = https://github.com/Alhakamim/terraform-google-billing-billboard.git
