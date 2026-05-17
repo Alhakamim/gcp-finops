@@ -144,7 +144,8 @@ async function main() {
   for (let month = 0; month < 6; month++) {
     for (const account of billingAccounts) {
       const invoiceDate = new Date(now.getFullYear(), now.getMonth() - month, 1);
-      const amount = +(Math.random() * account.budgetAmount * 0.8 + account.budgetAmount * 0.2).toFixed(2);
+      const budget = account.budgetAmount ?? 50000;
+      const amount = +(Math.random() * budget * 0.8 + budget * 0.2).toFixed(2);
       await prisma.invoice.create({
         data: {
           billingAccountId: account.id,
@@ -167,7 +168,7 @@ async function main() {
         billingAccountId: account.id,
         tenantId: tenant.id,
         name: `${account.name} Monthly Budget`,
-        amount: account.budgetAmount || 50000,
+        amount: account.budgetAmount ?? 50000,
         currency: 'USD',
         period: 'monthly',
         startDate: new Date(now.getFullYear(), now.getMonth(), 1),

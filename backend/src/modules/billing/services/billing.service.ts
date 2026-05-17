@@ -98,9 +98,9 @@ export class BillingService {
     const grandTotal = costs.reduce((s, c) => s + c.cost, 0);
 
     for (const c of costs) {
-      if (!breakdown[c.service]) breakdown[c.service] = { service: c.service, total: 0, percentage: 0, skus: {} };
-      breakdown[c.service].total += c.cost;
-      if (c.sku) breakdown[c.service].skus[c.sku] = (breakdown[c.service].skus[c.sku] || 0) + c.cost;
+      if (!breakdown[c.service ?? ""]) breakdown[c.service ?? ""] = { service: c.service ?? "", total: 0, percentage: 0, skus: {} };
+      breakdown[c.service ?? ""].total += c.cost;
+      if (c.sku) breakdown[c.service ?? ""].skus[c.sku] = (breakdown[c.service ?? ""].skus[c.sku] || 0) + c.cost;
     }
 
     for (const key of Object.keys(breakdown)) {
