@@ -1,0 +1,342 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Tenants ──
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  domain    String?
+  logo      String?
+  plan      String   @default("starter") // starter | pro | enterprise
+  status    String   @default("active")  // active | suspended | trial
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  billingAccounts BillingAccount[]
+  budgets       Budget[]
+  customers     Customer[]
+  auditLogs     AuditLog[]
+}
+
+// ── Users ──
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String?
+  image     String?
+  role      String   @default("member") // admin | manager | member | viewer
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider  String?  // google | credentials
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions    Session[]
+  accounts    Account[]
+  auditLogs   AuditLog[]
+  permissions UserPermission[]
+
+  @@unique([email, tenantId])
+  @@index([tenantId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  sessionToken String   @unique
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model UserPermission {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource  String // billing_account | budget | report | invoice
+  resourceId String? // specific ID or * for all
+  access    String // read | write | admin
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([resource, resourceId])
+}
+
+// ── GCP Billing Accounts ──
+model BillingAccount {
+  id              String   @id @default(cuid())
+  gcpBillingId    String   @unique // GCP's billing account ID
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name            String
+  displayName     String?
+  currency        String   @default("USD")
+  status          String   @default("active")
+  budgetAmount    Float?   @default(0)
+  serviceAccount  String?  // GCP service account email
+  credentialsFile String?  // Encrypted path
+  lastSyncAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  projects    GCPProject[]
+  costs       DailyCost[]
+  invoices    Invoice[]
+  budgets     Budget[]
+  syncLogs    SyncLog[]
+  costAnomalies CostAnomaly[]
+
+  @@index([tenantId])
+  @@index([gcpBillingId])
+}
+
+model GCPProject {
+  id               String   @id @default(cuid())
+  gcpProjectId     String   @unique
+  billingAccountId String
+  billingAccount   BillingAccount @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  name             String
+  projectNumber    String?
+  labels           Json?    @default("{}")
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  costs       DailyCost[]
+  costAnomalies CostAnomaly[]
+
+  @@index([billingAccountId])
+  @@index([gcpProjectId])
+}
+
+// ── Cost Data ──
+model DailyCost {
+  id               String   @id @default(cuid())
+  date             DateTime
+  billingAccountId String
+  billingAccount   BillingAccount @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  projectId        String?
+  project          GCPProject? @relation(fields: [projectId], references: [id])
+  service          String?   // Compute Engine, Cloud Storage, etc.
+  sku              String?
+  skuDescription   String?
+  region           String?
+  cost             Float
+  currency         String   @default("USD")
+  credits          Float    @default(0)
+  source           String   @default("billing_api") // billing_api | bigquery | manual
+  createdAt        DateTime @default(now())
+
+  @@index([billingAccountId, date])
+  @@index([projectId, date])
+  @@index([date])
+  @@index([service])
+  @@index([billingAccountId, service, date])
+}
+
+model CostAnomaly {
+  id               String   @id @default(cuid())
+  billingAccountId String
+  billingAccount   BillingAccount @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  projectId        String?
+  project          GCPProject? @relation(fields: [projectId], references: [id])
+  date             DateTime
+  service          String
+  cost             Float
+  expectedCost     Float
+  deviationPct     Float    // percentage deviation
+  severity         String   // low | medium | high | critical
+  reason           String?  @db.Text
+  status           String   @default("open") // open | acknowledged | resolved
+  resolvedAt       DateTime?
+  resolvedBy       String?
+  createdAt        DateTime @default(now())
+
+  @@index([billingAccountId, date])
+  @@index([severity])
+  @@index([status])
+}
+
+// ── Invoices ──
+model Invoice {
+  id               String   @id @default(cuid())
+  billingAccountId String
+  billingAccount   BillingAccount @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  invoiceNumber    String
+  invoiceDate      DateTime
+  dueDate          DateTime
+  amount           Float
+  currency         String   @default("USD")
+  status           String   @default("pending") // pending | paid | overdue | cancelled
+  pdfUrl           String?
+  gcpInvoiceId     String?
+  lineItems        Json?    @default("[]")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([billingAccountId, invoiceNumber])
+  @@index([billingAccountId])
+  @@index([status])
+}
+
+// ── Budgets ──
+model Budget {
+  id               String   @id @default(cuid())
+  billingAccountId String
+  billingAccount   BillingAccount @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name             String
+  amount           Float
+  currency         String   @default("USD")
+  period           String   @default("monthly") // monthly | quarterly | annual
+  startDate        DateTime
+  endDate          DateTime?
+  alertThresholds  Json     @default("[50, 75, 90, 100]")
+  forecastEnabled  Boolean  @default(true)
+  scope            String   @default("billing_account") // billing_account | project | service
+  scopeValue       String?  // project ID or service name
+  status           String   @default("active") // active | paused | archived
+  notifiedPct      Json?    @default("[]") // thresholds already notified
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  budgetAlerts BudgetAlert[]
+
+  @@index([billingAccountId])
+  @@index([tenantId])
+  @@index([status])
+}
+
+model BudgetAlert {
+  id        String   @id @default(cuid())
+  budgetId  String
+  budget    Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  threshold Float    // percentage threshold reached
+  actual    Float
+  budgeted  Float
+  sentAt    DateTime @default(now())
+  channel   String   @default("email") // email | webhook | slack
+  status    String   @default("sent") // sent | failed | read
+  createdAt DateTime @default(now())
+
+  @@index([budgetId])
+}
+
+// ── Customers (Multi-tenant management) ──
+model Customer {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  email        String?
+  gcpAccountId String?  // Their GCP billing account
+  plan         String   @default("starter")
+  status       String   @default("active")
+  metadata     Json?    @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+// ── Sync & Audit ──
+model SyncLog {
+  id               String   @id @default(cuid())
+  billingAccountId String
+  billingAccount   BillingAccount @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  type             String   // costs | invoices | projects | budgets
+  status           String   // running | success | failed | partial
+  message          String?  @db.Text
+  recordsProcessed Int      @default(0)
+  durationMs       Int      @default(0)
+  startedAt        DateTime @default(now())
+  completedAt      DateTime?
+
+  @@index([billingAccountId])
+  @@index([type, status])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String   // create | update | delete | login | export
+  resource   String   // billing_account | budget | invoice | user | report
+  resourceId String?
+  details    Json?    @default("{}")
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([action, resource])
+  @@index([createdAt])
+}
+
+// ── Scheduled Reports ──
+model SavedReport {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  config      Json     // report configuration (filters, metrics, date range)
+  schedule    String?  // daily | weekly | monthly | null (one-time)
+  recipients  Json?    @default("[]") // email addresses
+  format      String   @default("csv") // csv | pdf | xlsx
+  lastRunAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+// ── API Keys ──
+model ApiKey {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  key       String   @unique
+  scopes    Json     @default("[\"read:costs\"]")
+  lastUsed  DateTime?
+  expiresAt DateTime?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([key])
+}
