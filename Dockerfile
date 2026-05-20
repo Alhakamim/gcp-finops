@@ -38,8 +38,8 @@ ENV JWT_SECRET="change-me-in-production"
 
 EXPOSE 3001
 
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget -qO- http://localhost:3001/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=5 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3001/api/health || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "backend/dist/index.js"]
