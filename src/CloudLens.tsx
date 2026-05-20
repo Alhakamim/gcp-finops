@@ -5,7 +5,7 @@ import { getToken, auth as authApi, apiKeys as apiKeysApi, gcp as gcpApi } from 
 
 const TRANSLATIONS = {
   en: {
-    dir: "ltr", appName: "CntxtLens", appSub: "FinOps Platform",
+    dir: "ltr", appName: "CntxtLens", appSub: "CNTXT FinOps",
     billingAccount: "Billing Account", liveSyncAgo: "Live Sync \u00b7 2m ago",
     search: "Search\u2026",
     nav: { overview:"Overview", analytics:"Cost Analytics", projects:"Projects", invoices:"Invoices", budgets:"Budgets", reports:"Reports", settings:"Settings" },
@@ -106,7 +106,7 @@ const TRANSLATIONS = {
   },
 
   ar: {
-    dir: "rtl", appName: "\u0643\u0646\u062a\u0643\u0633\u062a \u0644\u0646\u0632", appSub: "\u0645\u0646\u0635\u0629 FinOps",
+    dir: "rtl", appName: "\u0643\u0646\u062a\u0643\u0633\u062a \u0644\u0646\u0632", appSub: "CNTXT FinOps",
     billingAccount: "\u062d\u0633\u0627\u0628 \u0627\u0644\u0641\u0648\u062a\u0631\u0629",
     liveSyncAgo: "\u0645\u0632\u0627\u0645\u0646\u0629 \u062d\u064a\u0629 \u00b7 \u0645\u0646\u0630 \u062f\u0642\u064a\u0642\u062a\u064a\u0646",
     search: "\u0628\u062d\u062b\u2026",
@@ -419,8 +419,8 @@ export default function App(){
         <aside style={{width:236,flexShrink:0,background:T.sidebar,borderInlineEnd:`1px solid ${T.sidebarBorder}`,display:"flex",flexDirection:"column",padding:"24px 0",position:"sticky",top:0,height:"100vh",transition:"background 0.2s"}}>
           <div style={{padding:"0 20px 28px"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <img src={dark?"/logo-white.jpg":"/logo-black.jpg"} alt="CntxtLens" style={{width:32,height:32,borderRadius:10,objectFit:'contain',flexShrink:0,background:'rgba(255,255,255,0.1)',padding:4}}/>
-              <div><div style={{fontSize:14,fontWeight:800,color:T.text}}>{t.appName}</div><div style={{fontSize:10,color:T.textMuted,fontWeight:500}}>{t.appSub}</div></div>
+              <img src={dark?"/logo-white.jpg":"/logo-black.jpg"} alt="CntxtLens" style={{width:42,height:42,borderRadius:10,objectFit:'contain',flexShrink:0,background:'rgba(255,255,255,0.1)',padding:4}}/>
+              <div><div style={{fontSize:15,fontWeight:800,color:T.text}}>{t.appName}</div><div style={{fontSize:11,color:T.textMuted,fontWeight:600,letterSpacing:'0.04em'}}>{t.appSub}</div></div>
             </div>
           </div>
 

@@ -112,7 +112,7 @@ export default function LoginPage() {
     <div style={styles.page}>
       <div style={styles.card}>
         <img src="/logo-colour.jpg" alt="CntxtLens" style={{width:'auto',height:56,marginBottom:16,borderRadius:12,objectFit:'contain'}}/>
-        <div style={styles.sub}>FinOps Platform</div>
+        <div style={styles.sub}>CNTXT FinOps</div>
 
         {error && <div style={styles.error}>{error}</div>}
 
