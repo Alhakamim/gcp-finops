@@ -419,7 +419,7 @@ export default function App(){
         <aside style={{width:236,flexShrink:0,background:T.sidebar,borderInlineEnd:`1px solid ${T.sidebarBorder}`,display:"flex",flexDirection:"column",padding:"24px 0",position:"sticky",top:0,height:"100vh",transition:"background 0.2s"}}>
           <div style={{padding:"0 20px 28px"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,#4F8EF7,#A78BFA)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>☁</div>
+              <img src="/logo.png" alt="CntxtLens" style={{width:32,height:32,borderRadius:10,objectFit:'contain',flexShrink:0,background:'rgba(255,255,255,0.1)',padding:4}}/>
               <div><div style={{fontSize:14,fontWeight:800,color:T.text}}>{t.appName}</div><div style={{fontSize:10,color:T.textMuted,fontWeight:500}}>{t.appSub}</div></div>
             </div>
           </div>
