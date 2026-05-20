@@ -387,7 +387,7 @@ export default function App(){
   const[lang,setLang]=useState("en");
   const[page,setPage]=useState("overview");
   const[showCmd,setShowCmd]=useState(false);
-  const[showUserMenu,setShowUserMenu]=useState(false);
+  const[showUserMenu,setShowUserMenu]=useState(false);const[showNotif,setShowNotif]=useState(false);
   const[billingAccounts,setBillingAccounts]=useState([]);
   const[dateStart,setDateStart]=useState(()=>{const d=new Date();d.setDate(1);return d;});
   const[dateEnd,setDateEnd]=useState(()=>new Date());
@@ -491,9 +491,31 @@ export default function App(){
                   </div>
                 )}
               </div>
-              <div style={{position:"relative",cursor:"pointer"}}>
-                <div style={{width:36,height:36,borderRadius:10,background:T.inputBg,border:`1px solid ${T.inputBorder}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🔔</div>
+              <div style={{position:'relative'}}>
+                <div onClick={()=>setShowNotif(v=>!v)} style={{width:36,height:36,borderRadius:10,background:T.inputBg,border:`1px solid ${T.inputBorder}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,cursor:'pointer'}}>🔔</div>
                 <div style={{position:"absolute",top:7,right:7,width:8,height:8,borderRadius:"50%",background:"#F87171",border:`2px solid ${T.notifDotBg}`}}/>
+                {showNotif&&(
+                  <div style={{position:'absolute',top:'100%',right:0,marginTop:8,background:T.cmdBg,border:`1px solid ${T.cmdBorder}`,borderRadius:12,overflow:'hidden',minWidth:320,boxShadow:'0 12px 40px rgba(0,0,0,0.4)',zIndex:200}}>
+                    <div style={{padding:'14px 18px',borderBottom:`1px solid ${T.tableRowBorder}`,fontSize:13,fontWeight:600,color:T.text}}>{t.notificationsCount}</div>
+                    {t.alerts.map((a,i)=>(
+                      <div key={i} style={{display:'flex',gap:12,padding:'12px 18px',borderBottom:`1px solid ${T.tableRowBorder}`,cursor:'pointer'}}
+                        onMouseEnter={e=>e.currentTarget.style.background=T.hoverBg}
+                        onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                        <AlertDot type={a.type}/>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:12,color:T.textSub,lineHeight:1.5}}>{a.msg}</div>
+                          <div style={{fontSize:11,color:T.textMuted,marginTop:3}}>{a.time}</div>
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{padding:'10px 18px',textAlign:'center',fontSize:11,color:'#4F8EF7',cursor:'pointer'}}
+                      onClick={()=>{setShowNotif(false);setPage('overview');}}
+                      onMouseEnter={e=>e.currentTarget.style.background=T.hoverBg}
+                      onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                      View all alerts →
+                    </div>
+                  </div>
+                )}
               </div>
               <div style={{position:'relative'}}>
                 <div onClick={()=>setShowUserMenu(v=>!v)} style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#4F8EF7,#A78BFA)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"white",cursor:"pointer"}}>{user?.name?.[0]||'U'}</div>
