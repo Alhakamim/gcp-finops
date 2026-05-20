@@ -1,0 +1,21 @@
+services:
+  cloudlens:
+    build: .
+    container_name: cloudlens
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5173:3001"
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-cloudlens-dev-secret-change-me}
+      - PORT=3001
+    volumes:
+      - cloudlens_data:/opt/cloudlens/backend/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  cloudlens_data:
